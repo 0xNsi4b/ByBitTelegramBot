@@ -3,7 +3,7 @@ FROM python:alpine
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR /telegram_bot
+WORKDIR /ByBitTelegramBot
 
 COPY ./requirements.txt ./
 
