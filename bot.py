@@ -51,6 +51,7 @@ async def stop(message: Message):
         if process is not None:
             process.terminate()
             process = None
+            await message.answer('Выключил бота')
         else:
             await message.answer('Бот уже выключен')
     else:
