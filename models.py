@@ -8,9 +8,10 @@ api_id = int(config.info.telegram_id.get_secret_value())
 api_hash = config.info.telegram_hash.get_secret_value()
 client = TelegramClient('anon', api_id, api_hash)
 
-pump_link = 'https://t.me/+aFxCHdek8a8yOGYy'
+pump_link = ''
 dump_link = ''
-
+io_link = ''
+io_dict = {}
 
 api_key = config.info.bybit_api.get_secret_value()
 api_secret = config.info.bybit_secret.get_secret_value()
@@ -95,7 +96,7 @@ def create_order(pair: str, side: str):
         closeOnTrigger=False
     )
 
-    # Set trading stop
+    # Set take profit
     if side == 'Buy':
         price = round(float(position['markPrice']) * (1 + settings['profit'] / 100), 4)
     else:
@@ -120,6 +121,19 @@ async def my_event_handler(event):
 async def my_event_handler(event):
     token = event.raw_text.split()[4]
     create_order(f'{token}USDT', 'Sell')
+
+
+@client.on(events.NewMessage(chats=io_link))
+async def my_event_handler(event):
+    token = event.raw_text.split()[4]
+    if token not in io_dict:
+        io_dict[token] = 1
+    else:
+        io_dict[token] += 1
+    if io_dict[token] >= 3:
+        create_order(f'{token}USDT', 'Buy')
+        io_dict[token] = 0
+
 
 with client:
     client.run_until_disconnected()
