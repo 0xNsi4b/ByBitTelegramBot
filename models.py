@@ -8,9 +8,8 @@ api_id = int(config.info.telegram_id.get_secret_value())
 api_hash = config.info.telegram_hash.get_secret_value()
 client = TelegramClient('anon', api_id, api_hash)
 
-pump_link = ''
-dump_link = ''
-io_link = ''
+pump_dump_link = 'pump_screener_bot'
+io_link = 'Open_Interest_screener_bot'
 io_dict = {}
 
 api_key = config.info.bybit_api.get_secret_value()
@@ -111,29 +110,35 @@ def create_order(pair: str, side: str):
     )
 
 
-@client.on(events.NewMessage(chats=pump_link))
+@client.on(events.NewMessage(chats=pump_dump_link))
 async def my_event_handler(event):
-    token = event.raw_text.split()[4]
-    create_order(f'{token}USDT', 'Buy')
-
-
-@client.on(events.NewMessage(chats=dump_link))
-async def my_event_handler(event):
-    token = event.raw_text.split()[4]
-    create_order(f'{token}USDT', 'Sell')
+    try:
+        text = event.raw_text.split()
+        if 'PUMP' in text:
+            create_order(f'{text[5]}USDT', 'Buy')
+        if 'DUMP' in text:
+            create_order(f'{text[5]}USDT', 'Buy')
+    except:
+        print('Error')
 
 
 @client.on(events.NewMessage(chats=io_link))
 async def my_event_handler(event):
-    token = event.raw_text.split()[4]
-    if token not in io_dict:
-        io_dict[token] = 1
-    else:
-        io_dict[token] += 1
-    if io_dict[token] >= 3:
-        create_order(f'{token}USDT', 'Buy')
-        io_dict[token] = 0
+    try:
+        token = event.raw_text.split()[5]
+        if token not in io_dict:
+            io_dict[token] = 1
+        else:
+            io_dict[token] += 1
+        if io_dict[token] >= 3:
+            create_order(f'{token}USDT', 'Buy')
+            print('d')
+            io_dict[token] = 0
+        print(event.raw_text.split())
+    except:
+        print('Error')
 
 
 with client:
     client.run_until_disconnected()
+
