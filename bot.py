@@ -20,9 +20,10 @@ process = None
 @dp.message(Command('start'))
 async def work(message: Message):
     if message.from_user.id == admin:
-        await message.answer('/start_bot - Запускает бота на неработающие пары \n'
-                             '/stop_bot - Выключает пару и удаляет ее \n'
+        await message.answer('/start_bot - Запускает бота \n'
+                             '/stop_bot - Выключает бота \n'
                              '/example - Показывает поведение бота в установленных настройках\n'
+                             'value <число> - Изменяет value в долларах\n'
                              'leverage <число> - Изменяет leverage\n'
                              'stop <число> - Изменяет trailing stop в процентах\n'
                              'profit <число> - Изменяет take profit в процентах\n')
@@ -69,14 +70,19 @@ async def stop(message: Message):
         trailing_stop = round(50000 * dct['stop'] / 100, 4)
         price_long = round(50000 * (1 + dct['profit'] / 100), 4)
         price_short = round(50000 * (1 - dct['profit'] / 100), 4)
+        take_profit = dct['value'] * dct['leverage'] * dct['profit']/100
+        lost = dct['value'] * dct['leverage'] * dct['stop']/100
 
         await message.answer(f'Leverage: {dct["leverage"]}\n'
+                             f'Value usdt: {dct["value"]}\n'
                              f'Trailing stop в процентах: {dct["stop"]}\n'
                              f'Take profit в процентах: {dct["profit"]}\n'
                              f'Пример цене BTC в 50000 \n'
                              f'Открытие на количество монеты {amount} \n'
                              f'Trailing stop в лонге {50000 - trailing_stop}, в шорте {50000 + trailing_stop}, \n'
-                             f'Take profit в лонге {price_long}, в шорте {price_short}, \n')
+                             f'Take profit в лонге {price_long}, в шорте {price_short} \n'
+                             f'Прибыль при срабатывание take profit {take_profit} \n'
+                             f'Потери при срабатывание trailing stop {lost} \n')
     else:
         await message.answer('Вы не являетесь администратором.')
 
@@ -97,6 +103,13 @@ async def stop(message: Message):
             df['stop'][0] = float(stop_lose)
             df.to_csv('settings.csv', index=False)
             await message.reply(f'Вы имзменили stop на {stop_lose}')
+
+        if 'value' in message.text.lower():
+            value = message.text.split()[1]
+            df = pd.read_csv('settings.csv')
+            df['value'][0] = float(value)
+            df.to_csv('settings.csv', index=False)
+            await message.reply(f'Вы имзменили value на {value}')
 
         if 'profit' in message.text.lower():
             profit = message.text.split()[1]
